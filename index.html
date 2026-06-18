@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>World Cup Predictor</title>
+<style>
+body{
+font-family:Arial;
+max-width:1200px;
+margin:20px auto;
+background:#f7f7f7;
+}
+h1{margin-bottom:20px}
+.group{
+background:white;
+padding:15px;
+margin-bottom:20px;
+border-radius:10px;
+box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+td,th{
+border:1px solid #ddd;
+padding:6px;
+text-align:center;
+}
+input{
+width:45px;
+text-align:center;
+}
+button{
+padding:12px 18px;
+margin:20px 0;
+cursor:pointer;
+}
+.result{
+background:white;
+padding:15px;
+border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🏆 World Cup 2026 — Predictor</h1>
+
+<div id="app"></div>
+
+<button onclick="calc()">📊 Рассчитать таблицы</button>
+
+<div id="result"></div>
+
+<script>
+
+const groups = {
+A:["Mexico","South Korea","South Africa","Czechia"],
+B:["Canada","Switzerland","Qatar","Bosnia"],
+C:["Brazil","Morocco","Scotland","Haiti"],
+D:["USA","Australia","Turkey","Paraguay"],
+E:["Germany","Ivory Coast","Ecuador","Curacao"],
+F:["Netherlands","Japan","Sweden","Tunisia"],
+G:["Belgium","Iran","Egypt","New Zealand"],
+H:["Spain","Uruguay","Saudi Arabia","Cape Verde"],
+I:["France","Norway","Senegal","Iraq"],
+J:["Argentina","Austria","Algeria","Jordan"],
+K:["Portugal","Colombia","Uzbekistan","DR Congo"],
+L:["England","Croatia","Ghana","Panama"]
+};
+
+let matches = [];
+
+function build(){
+
+const app = document.getElementById("app");
+
+for(let g in groups){
+
+let t = groups[g];
+
+let games = [
+[t[0],t[1]],
+[t[2],t[3]],
+[t[0],t[2]],
+[t[1],t[3]],
+[t[0],t[3]],
+[t[1],t[2]]
+];
+
+games.forEach(m=>{
+matches.push({group:g,home:m[0],away:m[1]});
+});
+
+let html = `<div class="group"><h2>Группа ${g}</h2><table>`;
+
+games.forEach(()=>{
+html += `
+<tr>
+<td><input type="number" placeholder="0"></td>
+<td>:</td>
+<td><input type="number" placeholder="0"></td>
+</tr>`;
+});
+
+html += `</table></div>`;
+
+app.innerHTML += html;
+}
+
+}
+
+function calc(){
+
+let teams = {};
+
+Object.values(groups).flat().forEach(t=>{
+teams[t] = {pts:0,gf:0,ga:0};
+});
+
+let inputs = document.querySelectorAll("input");
+let idx = 0;
+
+for(let m of matches){
+
+let a = Number(inputs[idx++].value);
+let b = Number(inputs[idx++].value);
+
+if(isNaN(a) || isNaN(b)) continue;
+
+teams[m.home].gf += a;
+teams[m.home].ga += b;
+teams[m.away].gf += b;
+teams[m.away].ga += a;
+
+if(a > b) teams[m.home].pts += 3;
+else if(b > a) teams[m.away].pts += 3;
+else {teams[m.home].pts++; teams[m.away].pts++;}
+}
+
+let arr = Object.entries(teams).map(([name,v])=>({
+name,...v,gd:v.gf - v.ga
+}));
+
+arr.sort((a,b)=>
+b.pts - a.pts ||
+b.gd - a.gd ||
+b.gf - a.gf
+);
+
+let html = `<div class="result"><h2>📊 Итоговая таблица</h2>
+<table>
+<tr>
+<th>Команда</th>
+<th>Очки</th>
+<th>Забито</th>
+<th>Пропущено</th>
+<th>Разница</th>
+</tr>`;
+
+arr.forEach(t=>{
+html += `<tr>
+<td>${t.name}</td>
+<td>${t.pts}</td>
+<td>${t.gf}</td>
+<td>${t.ga}</td>
+<td>${t.gd}</td>
+</tr>`;
+});
+
+html += `</table></div>`;
+
+document.getElementById("result").innerHTML = html;
+
+}
+
+build();
+
+</script>
+
+</body>
+</html>
